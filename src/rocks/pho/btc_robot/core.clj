@@ -4,6 +4,25 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]))
 
+(defn get-core-kline
+  "get core data :datetime :up :end-price :price-rate"
+  [a-kline]
+  (let [tmp-price (atom 0)]
+    (map (fn [one]
+           (let [datetime (:datetime one)
+                 up (:up one)
+                 end-price (:end-price one)]
+             {:datetime datetime
+              :up up
+              :end-prcie end-price
+              :price-rate (if (= @tmp-price 0)
+                            (do (reset! tmp-price end-price)
+                                0)
+                            (let [re (/ (- end-price @tmp-price)
+                                        @tmp-price)]
+                              (reset! tmp-price end-price)
+                              re))})) a-kline)))
+
 (defn deal-one-kline
   "add other value for one kline"
   [data]
@@ -43,7 +62,7 @@
 (defn get-last-kline
   "get last n kline by type"
   [type last-n]
-  (reverse (map #(parse-kline-data %) (take last-n (reverse (get-kline type))))))
+  (reverse (map #(deal-one-kline (parse-kline-data %)) (take last-n (reverse (get-kline type))))))
 
 (defn -main
   "I don't do a whole lot ... yet."
