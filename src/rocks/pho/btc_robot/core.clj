@@ -5,21 +5,26 @@
             [clojure.data.json :as json]))
 
 (defn get-core-kline
-  "get core data :datetime :up :end-price :price-rate"
+  "get core data :datetime :up :end-price :diff-price :price-rate"
   [a-kline]
   (let [tmp-price (atom 0)]
     (map (fn [one]
            (let [datetime (:datetime one)
                  up (:up one)
-                 end-price (:end-price one)]
+                 end-price (:end-price one)
+                 diff-price (if (= @tmp-price 0)
+                              0
+                              (int (* 100 (- end-price @tmp-price))))]
              {:datetime datetime
               :up up
               :end-prcie end-price
+              :diff-price diff-price
               :price-rate (if (= @tmp-price 0)
                             (do (reset! tmp-price end-price)
                                 0)
-                            (let [re (/ (- end-price @tmp-price)
-                                        @tmp-price)]
+                            (let [re (int (* (/ diff-price
+                                                @tmp-price)
+                                             10000))]
                               (reset! tmp-price end-price)
                               re))})) a-kline)))
 
@@ -67,4 +72,5 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (println "Hello, World!"))
+  (println "Hello, World!")
+  (let []))
