@@ -5,7 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/data.json "0.2.6"]
-                 [clj-http "2.0.0"]]
+                 [clj-http "2.0.0"]
+                 [digest "1.4.4"]]
   :main ^:skip-aot rocks.pho.btc-robot.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
