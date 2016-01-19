@@ -4,7 +4,7 @@
             [clojure.data.json :as json]))
 
 (defn get-account-info
-  "FIXME"
+  "get account info"
   [access_key secret_key]
   (let [unix-time (int (/ (System/currentTimeMillis) 1000))
         sign-str (str "access_key="
@@ -20,3 +20,10 @@
                                                       :access_key access_key
                                                       :created unix-time
                                                       :sign sign}})))))
+
+(defn get-staticmarket
+  "get realtime market"
+  []
+  (let [api-url "http://api.huobi.com/staticmarket/ticker_btc_json.js"]
+    (json/read-str (:body (client/post api-url))
+                   :key-fn keyword)))
