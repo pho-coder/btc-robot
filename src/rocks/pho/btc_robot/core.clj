@@ -4,6 +4,7 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [taoensso.timbre :as log]
+            [taoensso.timbre.appenders.core :as appenders]
             [rocks.pho.btc-robot.utils :as utils]))
 
 (def ^:dynamic *buy-status* (atom "HOLDING"))
@@ -46,7 +47,7 @@
 (defn buy-or-sell
   "buy or sell"
   []
-  (let [h-trend (history-trend)]
+  (let [h-trend (utils/history-trend)]
     (log/info h-trend)
     (case @*buy-status*
       "BUYING" (if (down-stop?)
@@ -60,6 +61,8 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
+  (log/merge-config!
+   {:appenders {:spit (appenders/spit-appender {:fname "btc-robot.log"})}})
   (log/info "Hello, World!")
   (let [access_key (first args)
         secret_key (second args)]
