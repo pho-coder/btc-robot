@@ -1,4 +1,6 @@
-(ns rocks.pho.btc-robot.utils)
+(ns rocks.pho.btc-robot.utils
+  (:require [clj-http.client :as client]
+            [digest :as digest]))
 
 (defn get-account-info
   "FIXME"

@@ -2,8 +2,7 @@
   (:gen-class)
 
   (:require [clj-http.client :as client]
-            [clojure.data.json :as json]
-            [digest :as digest]))
+            [clojure.data.json :as json]))
 
 (defn get-core-kline
   "get core data :datetime :up :end-price :diff-price :price-rate"
