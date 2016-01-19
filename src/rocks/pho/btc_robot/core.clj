@@ -2,7 +2,8 @@
   (:gen-class)
 
   (:require [clj-http.client :as client]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [rocks.pho.btc-robot.utils :as utils]))
 
 (defn get-core-kline
   "get core data :datetime :up :end-price :diff-price :price-rate"
@@ -74,4 +75,4 @@
   (println "Hello, World!")
   (let [access_key (first args)
         secret_key (second args)]
-    (prn access_key secret_key)))
+    (prn (utils/get-account-info access_key secret_key))))
