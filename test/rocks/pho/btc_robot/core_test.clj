@@ -6,4 +6,3 @@
   (testing "get kline"
     (prn (get-core-kline (get-last-kline "001" 10)))
     (is (= 1 1))))
-
