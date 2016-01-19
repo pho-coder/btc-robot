@@ -92,4 +92,6 @@
   "I don't do a whole lot ... yet."
   [& args]
   (println "Hello, World!")
-  (let []))
+  (let [access_key (first args)
+        secret_key (second args)]
+    (prn access_key secret_key)))
