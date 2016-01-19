@@ -9,6 +9,10 @@
 
 (def ^:dynamic *buy-status* (atom "HOLDING"))
 (def ^:dynamic *buy-price* (atom nil))
+(def ^:dynamic *chips* (atom {:money 5000 :btc 0}))
+;; ({:action "buy" :price 12 :volume 1})
+(def ^:dynamic *actions* (atom (list)))
+
 
 (defn down-stop?
   "down to stop point"
