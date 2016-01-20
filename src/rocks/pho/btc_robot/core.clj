@@ -72,4 +72,4 @@
         secret_key (second args)]
     (while true
       (buy-or-sell)
-      (Thread/sleep 10000))))
+      (Thread/sleep 60000))))
