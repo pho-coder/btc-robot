@@ -4,8 +4,11 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
-            [rocks.pho.btc-robot.utils :as utils]))
+            [rocks.pho.btc-robot.utils :as utils]
+            [rocks.pho.btc-robot.timer :as timer]))
 
+;; {:datetime :trend}
+(def ^:dynamic *kline-status* (atom {}))
 (def ^:dynamic *buy-status* (atom "HOLDING"))
 (def ^:dynamic *buy-price* (atom nil))
 (def ^:dynamic *chips* (atom {:money 5000 :btc 0}))
@@ -81,7 +84,9 @@
   [& args]
   (log/info "Hello, World!")
   (let [access_key (first args)
-        secret_key (second args)]
+        secret_key (second args)
+        kline-timer (timer/mk-timer)]
     (while true
       (buy-or-sell)
       (Thread/sleep 60000))))
+
