@@ -2,7 +2,7 @@
   (:require [clj-http.client :as client]
             [digest :as digest]
             [clojure.data.json :as json]
-            [taoensso.timbre :as log]))
+            [clojure.tools.logging :as log]))
 
 (defn get-account-info
   "get account info"

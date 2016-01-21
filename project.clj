@@ -7,7 +7,9 @@
                  [org.clojure/data.json "0.2.6"]
                  [clj-http "2.0.0"]
                  [digest "1.4.4"]
-                 [com.taoensso/timbre "4.2.1"]]
+                 [org.apache.logging.log4j/log4j-core "2.5"]
+                 [org.slf4j/slf4j-log4j12 "1.7.13"]
+                 [org.clojure/tools.logging "0.3.1"]]
   :main ^:skip-aot rocks.pho.btc-robot.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
