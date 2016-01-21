@@ -12,10 +12,6 @@
 ;; ({:action "buy" :price 12 :volume 1})
 (def ^:dynamic *actions* (atom (list)))
 
-(defn buy?
-  "buy?"
-  (if (= @*buy-status* "HOLDING")))
-
 (defn down-stop?
   "down to stop point"
   []
