@@ -12,4 +12,5 @@
                  [org.clojure/tools.logging "0.3.1"]]
   :main ^:skip-aot rocks.pho.btc-robot.core
   :target-path "target/%s"
+  :jvm-opts ["-Duser.timezone=GMT+08"]
   :profiles {:uberjar {:aot :all}})
