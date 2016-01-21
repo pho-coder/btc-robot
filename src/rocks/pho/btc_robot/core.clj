@@ -12,6 +12,22 @@
 ;; ({:action "buy" :price 12 :volume 1})
 (def ^:dynamic *actions* (atom (list)))
 
+(def BUY-TOP-RATE 15)
+
+(defn can-buy?
+  "if can buy"
+  [buy-price last-price]
+  (if (not= @*buy-status* "HOLDING")
+    (do (log/error "buy status:" @*buy-status* "can't buy now")
+        false)
+    (let [diff-rate (int (* 100 (/ (- buy-price last-price) last-price)))]
+      (if (> diff-rate BUY-TOP-RATE)
+        (do (log/error "buy price is too high!" diff-rate "more than" BUY-TOP-RATE)
+            false)
+        true))))
+
+
+
 (defn down-stop?
   "down to stop point"
   []
