@@ -5,9 +5,9 @@
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [rocks.pho.btc-robot.utils :as utils]
-            [rocks.pho.btc-robot.timer :as timer]))
+            [com.jd.bdp.magpie.util.timer :as timer]))
 
-;; {:datetime :trend}
+;; {:datetime :trend :end-price}
 (def ^:dynamic *kline-status* (atom {}))
 (def ^:dynamic *buy-status* (atom "HOLDING"))
 (def ^:dynamic *buy-price* (atom nil))
@@ -16,6 +16,14 @@
 (def ^:dynamic *actions* (atom (list)))
 
 (def BUY-TOP-RATE 15)
+
+(defn update-kline-status
+  "update kline status"
+  []
+  (let [h-trend (utils/history-trend)]
+    (reset! *kline-status* {:datetime (:datetime h-trend)
+                            :trend (:trend h-trend)
+                            :end-price (:end-price h-trend)})))
 
 (defn can-buy?
   "if can buy"
@@ -87,6 +95,8 @@
         secret_key (second args)
         kline-timer (timer/mk-timer)]
     (while true
+      (update-kline-status)
+      (log/info "kline status:" @*kline-status*)
       (buy-or-sell)
       (Thread/sleep 60000))))
 

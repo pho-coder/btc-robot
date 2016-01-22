@@ -91,12 +91,15 @@
   "judge trend by last two kline"
   []
   (let [kline (reverse (get-core-kline (get-last-kline "001" 10)))
-        last-one (:trend (first kline))
-        second-last-one (:trend (second kline))]
-    (log/info kline)
-    (if-not (= last-one second-last-one)
-      "other"
-      (case last-one
-        "flat" "flat"
-        "up" "up"
-        "down" "down"))))
+        last-one (first kline)
+        last-one-trend (:trend last-one)
+        second-last-one-trend (:trend (second kline))]
+    (log/debug kline)
+    {:datetime (:datetime last-one)
+     :end-price (:end-price last-one)
+     :trend (if-not (= last-one-trend second-last-one-trend)
+              "other"
+              (case last-one-trend
+                "flat" "flat"
+                "up" "up"
+                "down" "down"))}))
