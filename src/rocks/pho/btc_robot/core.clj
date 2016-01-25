@@ -35,7 +35,24 @@
       (if (> diff-rate BUY-TOP-RATE)
         (do (log/error "buy price is too high!" diff-rate "more than" BUY-TOP-RATE)
             false)
-        true))))
+        (if (= (:trend @*kline-status*) "up")
+          true
+          false)))))
+
+(defn can-sell?
+  "if can sell"
+  [sell-price]
+  (if (not= @*buy-status* "BUYING")
+    false
+    (let [trend (:trend @*kline-status*)]
+      (if (= trend "up")
+        false
+        (let [buy-price (:price (first @*actions*))
+              diff-rate (int (* 100 (/ (- buy-price sell-price) buy-price)))]
+          (if (> diff-rate BUY-TOP-RATE)
+            (do (log/info "price is too low, sell!")
+                true)
+            false))))))
 
 (defn sell
   "sell now"
@@ -81,7 +98,7 @@
         transaction-timer (timer/mk-timer)]
     (timer/schedule-recurring kline-timer 0 60
                               (fn []
-                                (update-kline-status))) 
+                                (update-kline-status)))
     (timer/schedule-recurring transaction-timer 10 30
                               (fn []
                                 (buy-or-sell)))
