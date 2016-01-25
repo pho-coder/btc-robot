@@ -10,9 +10,8 @@
 ;; {:datetime :trend :end-price}
 (def ^:dynamic *kline-status* (atom {}))
 (def ^:dynamic *buy-status* (atom "HOLDING"))
-(def ^:dynamic *buy-price* (atom nil))
 (def ^:dynamic *chips* (atom {:money 5000 :btc 0}))
-;; ({:action "buy" :price 12 :volume 1})
+;; ({:action "buy" :price 12 :volume 1 :datetime 2016-01-01 14:20})
 (def ^:dynamic *actions* (atom (list)))
 
 (def BUY-TOP-RATE 15)
@@ -38,34 +37,29 @@
             false)
         true))))
 
-
-
-(defn down-stop?
-  "down to stop point"
-  []
-  (let [staticmarket (utils/get-staticmarket)
-        last-price (:last (:ticker staticmarket))
-        diff-price (- @*buy-price* last-price)
-        diff-rate (/ diff-price @*buy-price*)]
-    (if (> diff-rate 0.15)
-      (do (log/info "touch down stop point")
-          true)
-      false)))
-
 (defn sell
   "sell now"
-  []
-  (let [staticmarket (utils/get-staticmarket)
-        last-price (:last (:ticker staticmarket))]
-    (log/info staticmarket)
-    (log/info (str "sell at:" last-price))
-    (reset! *buy-status* "HOLDING")))
+  [sell-price]
+  (reset! *buy-status* "HOLDING")
+  (reset! *actions* (conj @*actions* {:action "sell"
+                                      :price sell-price
+                                      :volume 1
+                                      :datetime (System/currentTimeMillis)}))
+  (reset! *chips* {:money (+ (:money @*chips*) sell-price)
+                   :btc 0})
+  (log/info "sell at:" sell-price))
 
 (defn buy
   "buy now"
   [buy-price]
-  (reset! *buy-status* "HOLDING")
-  (log/info "buy at: buy-price"))
+  (reset! *buy-status* "BUYING")
+  (reset! *actions* (conj @*actions* {:action "buy"
+                                      :price buy-price
+                                      :volume 1
+                                      :datetime (System/currentTimeMillis)}))
+  (reset! *chips* {:money (- (:money @*chips*) buy-price)
+                   :btc 1})
+  (log/info "buy at:" buy-price))
 
 (defn buy-or-sell
   "buy or sell"
@@ -75,8 +69,7 @@
     (case @*buy-status*
       "HOLDING" (if (can-buy? last-price)
                   (buy last-price))
-      "BUYING" (if (can-sell? last-price)
-                 (sell last-price)))))
+      "BUYING" (sell last-price))))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -84,10 +77,18 @@
   (log/info "Hello, World!")
   (let [access_key (first args)
         secret_key (second args)
-        kline-timer (timer/mk-timer)]
+        kline-timer (timer/mk-timer)
+        transaction-timer (timer/mk-timer)]
+    (timer/schedule-recurring kline-timer 0 60
+                              (fn []
+                                (update-kline-status))) 
+    (timer/schedule-recurring transaction-timer 10 30
+                              (fn []
+                                (buy-or-sell)))
     (while true
-      (update-kline-status)
+      (Thread/sleep 60000)
       (log/info "kline status:" @*kline-status*)
-      (buy-or-sell)
-      (Thread/sleep 60000))))
+      (log/info "chips:" @*chips*)
+      (log/info "actions:" @*actions*)
+      (log/info "buy-status:" @*buy-status*))))
 
