@@ -27,11 +27,12 @@
 
 (defn can-buy?
   "if can buy"
-  [buy-price last-price]
+  [buy-price]
   (if (not= @*buy-status* "HOLDING")
     (do (log/error "buy status:" @*buy-status* "can't buy now")
         false)
-    (let [diff-rate (int (* 100 (/ (- buy-price last-price) last-price)))]
+    (let [last-end-price (:end-price @*kline-status*)
+          diff-rate (int (* 100 (/ (- buy-price last-end-price) last-end-price)))]
       (if (> diff-rate BUY-TOP-RATE)
         (do (log/error "buy price is too high!" diff-rate "more than" BUY-TOP-RATE)
             false)
@@ -62,30 +63,20 @@
 
 (defn buy
   "buy now"
-  []
-  (let [staticmarket (utils/get-staticmarket)
-        last-price (:last (:ticker staticmarket))
-        open-price (:open (:ticker staticmarket))]
-    (log/info staticmarket)
-    (if (> last-price open-price)
-      (do (log/info (str "buy at:" last-price))
-          (reset! *buy-status* "BUYING")
-          (reset! *buy-price* last-price))
-      (log/info "buy fail"))))
+  [buy-price]
+  (reset! *buy-status* "HOLDING")
+  (log/info "buy at: buy-price"))
 
 (defn buy-or-sell
   "buy or sell"
   []
-  (let [h-trend (utils/history-trend)]
-    (log/info h-trend)
+  (let [staticmarket (utils/get-staticmarket)
+        last-price (:last (:ticker staticmarket))]
     (case @*buy-status*
-      "BUYING" (if (down-stop?)
-                 (do (sell)
-                     (System/exit 1))
-                 (if (= h-trend "down")
-                   (sell)))
-      "HOLDING" (if (= h-trend "up")
-                  (buy)))))
+      "HOLDING" (if (can-buy? last-price)
+                  (buy last-price))
+      "BUYING" (if (can-sell? last-price)
+                 (sell last-price)))))
 
 (defn -main
   "I don't do a whole lot ... yet."

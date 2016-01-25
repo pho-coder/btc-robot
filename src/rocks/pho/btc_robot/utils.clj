@@ -44,7 +44,7 @@
                        (> diff-price 100) "up"
                        (< diff-price -100) "down"
                        :else "flat")
-              :end-prcie end-price
+              :end-price end-price
               :diff-price diff-price
               :price-rate (if (= @tmp-price 0)
                             (do (reset! tmp-price end-price)
