@@ -2,7 +2,16 @@
   (:require [clj-http.client :as client]
             [digest :as digest]
             [clojure.data.json :as json]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clj-time.local :as local-time]
+            [clj-time.format :as format-time]))
+
+(defn now
+  "get now yyyy-MM-dd HH:mm:ss"
+  []
+  (let [n (local-time/local-now)
+        f (format-time/formatter "yyyy-MM-dd HH:mm:ss")]
+    (format-time/unparse f n)))
 
 (defn get-account-info
   "get account info"

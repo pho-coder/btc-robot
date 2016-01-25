@@ -2,6 +2,7 @@
   (:gen-class)
 
   (:require [clj-http.client :as client]
+            [clj-time.core :as t]
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [rocks.pho.btc-robot.utils :as utils]
@@ -28,8 +29,7 @@
   "if can buy"
   [buy-price]
   (if (not= @*buy-status* "HOLDING")
-    (do (log/error "buy status:" @*buy-status* "can't buy now")
-        false)
+    false
     (let [last-end-price (:end-price @*kline-status*)
           diff-rate (int (* 100 (/ (- buy-price last-end-price) last-end-price)))]
       (if (> diff-rate BUY-TOP-RATE)
@@ -52,7 +52,9 @@
           (if (> diff-rate BUY-TOP-RATE)
             (do (log/info "price is too low, sell!")
                 true)
-            false))))))
+            (if (= trend "down")
+              true
+              false)))))))
 
 (defn sell
   "sell now"
@@ -61,7 +63,7 @@
   (reset! *actions* (conj @*actions* {:action "sell"
                                       :price sell-price
                                       :volume 1
-                                      :datetime (System/currentTimeMillis)}))
+                                      :datetime (utils/now)}))
   (reset! *chips* {:money (+ (:money @*chips*) sell-price)
                    :btc 0})
   (log/info "sell at:" sell-price))
@@ -73,7 +75,7 @@
   (reset! *actions* (conj @*actions* {:action "buy"
                                       :price buy-price
                                       :volume 1
-                                      :datetime (System/currentTimeMillis)}))
+                                      :datetime (utils/now)}))
   (reset! *chips* {:money (- (:money @*chips*) buy-price)
                    :btc 1})
   (log/info "buy at:" buy-price))
@@ -86,7 +88,8 @@
     (case @*buy-status*
       "HOLDING" (if (can-buy? last-price)
                   (buy last-price))
-      "BUYING" (sell last-price))))
+      "BUYING" (if (can-sell? last-price)
+                 (sell last-price)))))
 
 (defn -main
   "I don't do a whole lot ... yet."
