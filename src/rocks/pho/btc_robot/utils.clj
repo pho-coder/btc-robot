@@ -45,7 +45,7 @@
     (map (fn [one]
            (let [datetime (:datetime one)
                  end-price (:end-price one)
-                 diff-price (if (= @tmp-price 0)
+                 diff-price (if (zero? @tmp-price)
                               0
                               (int (* 100 (- end-price @tmp-price))))]
              {:datetime datetime
@@ -94,7 +94,7 @@
 (defn get-last-kline
   "get last n kline by type"
   [type last-n]
-  (reverse (map #(parse-kline-data %) (take last-n (reverse (get-kline type))))))
+  (reverse (map parse-kline-data (take last-n (reverse (get-kline type))))))
 
 (defn history-trend
   "judge trend by last two kline"

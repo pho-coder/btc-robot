@@ -15,4 +15,5 @@
   :main ^:skip-aot rocks.pho.btc-robot.core
   :target-path "target/%s"
   :jvm-opts ["-Duser.timezone=GMT+08"]
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}}
+  :plugins [[lein-kibit "0.1.2"]])

@@ -110,11 +110,9 @@
         kline-timer (timer/mk-timer)
         transaction-timer (timer/mk-timer)]
     (timer/schedule-recurring kline-timer 0 60
-                              (fn []
-                                (update-kline-status)))
+                              update-kline-status)
     (timer/schedule-recurring transaction-timer 10 30
-                              (fn []
-                                (buy-or-sell)))
+                              buy-or-sell)
     (while true
       (Thread/sleep 60000)
       (log/info "kline status:" @*kline-status*)
