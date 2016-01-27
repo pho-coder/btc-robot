@@ -10,7 +10,7 @@
   "get now yyyy-MM-dd HH:mm:ss"
   []
   (let [n (local-time/local-now)
-        f (format-time/formatter "yyyy-MM-dd HH:mm:ss")]
+        f (format-time/formatter-local "yyyy-MM-dd HH:mm:ss")]
     (format-time/unparse f n)))
 
 (defn get-account-info
