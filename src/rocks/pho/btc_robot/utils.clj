@@ -64,11 +64,26 @@
                               (reset! tmp-price end-price)
                               re))})) a-kline)))
 
+(defn dice
+  "predict the trend"
+  [a-kline]
+  (let [a-indexed-kline (map-indexed vector a-kline)
+        predict-trend (fn [a-part-kline]
+                        )]
+    ))
+
 (defn parse-kline-data
   "parse kline data from array to map"
   [data]
-  {:datetime (let [datetime (nth data 0)]
-               (str (.substring datetime 0 4)
+  (let [datetime (nth data 0)
+        start-price (nth data 1)
+        top-price (nth data 2)
+        low-price (nth data 3)
+        end-price (nth data 4)
+        volume (nth data 5)
+        end-diff-price (- end-price start-price)
+        max-diff-price (- top-price low-price)]
+    {:datetime (str (.substring datetime 0 4)
                     "-"
                     (.substring datetime 4 6)
                     "-"
@@ -76,12 +91,15 @@
                     " "
                     (.substring datetime 8 10)
                     ":"
-                    (.substring datetime 10 12)))
-   :start-price (nth data 1)
-   :top-price (nth data 2)
-   :low-price (nth data 3)
-   :end-price (nth data 4)
-   :volume (nth data 5)})
+                    (.substring datetime 10 12))
+     :start-price start-price
+     :top-price top-price
+     :low-price low-price
+     :end-price end-price
+     :volume volume
+     :end-diff-price end-diff-price
+     :end-diff-price-rate (int (* 100 (/ end-diff-price start-price)))
+     :max-diff-price max-diff-price}))
 
 (defn get-kline
   "get kline 001 005 ..."
