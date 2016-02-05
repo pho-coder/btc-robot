@@ -64,22 +64,58 @@
                               (reset! tmp-price end-price)
                               re))})) a-kline)))
 
-(defn dice
-  "predict the trend"
+(defn dice-once
+  "predict trend once"
+  [a-kline up-down?]
+  (let [len (.size a-kline)
+        start-price (:start-price (first a-kline))
+        end-price (:end-price (last a-kline))
+        diff-rate (int (/ (* 10000 (- end-price start-price)) start-price))]
+    (case up-down?
+      "up" (if (> diff-rate 20)
+             (log/info "buy point at:" (last a-kline)))
+      "down" (if (< diff-rate -10)
+               (log/info "sell point at:" (last a-kline))))))
+
+(defn dice-them
+  "dice the trend by real data"
   [a-kline]
-  (let [a-indexed-kline (map-indexed vector a-kline)
-        predict-trend (fn [a-part-kline]
-                        )]
-    ))
+  (let [trend-step 3
+        a-indexed-kline (map-indexed vector a-kline)
+        start-point (atom nil) ;; {:trend "up" :index 12}
+        trend-now (fn [end-diff-price]
+                    (cond
+                      (> end-diff-price 0) "up"
+                      (< end-diff-price 0) "down"
+                      (= end-diff-price 0) "flat"
+                      :else "others"))
+        reset-start-point! (fn [a-vec]
+                             (let [[index kline] a-vec]
+                               (if (= index 0)
+                                 (reset! start-point {:index 0
+                                                      :trend (trend-now (:end-diff-price kline))})
+                                 (let [this-trend (trend-now (:end-diff-price kline))]
+                                   (if (= this-trend (:trend @start-point))
+                                     (if (and (>= (- (inc index) (:index @start-point)
+                                                     trend-step))
+                                              (or (= this-trend "up")
+                                                  (= this-trend "down")))
+                                       (dice-once (subvec (vec a-kline)
+                                                          (:index @start-point)
+                                                          (inc index))
+                                                  this-trend))
+                                     (reset! start-point {:index index
+                                                          :trend this-trend}))))))]
+    (map reset-start-point! a-indexed-kline)))
 
 (defn parse-kline-data
   "parse kline data from array to map"
   [data]
   (let [datetime (nth data 0)
-        start-price (nth data 1)
-        top-price (nth data 2)
-        low-price (nth data 3)
-        end-price (nth data 4)
+        start-price (int (* 100 (nth data 1)))
+        top-price (int (* 100 (nth data 2)))
+        low-price (int (* 100 (nth data 3)))
+        end-price (int (* 100 (nth data 4)))
         volume (nth data 5)
         end-diff-price (- end-price start-price)
         max-diff-price (- top-price low-price)]
@@ -98,8 +134,9 @@
      :end-price end-price
      :volume volume
      :end-diff-price end-diff-price
-     :end-diff-price-rate (int (* 100 (/ end-diff-price start-price)))
-     :max-diff-price max-diff-price}))
+     :end-diff-price-rate (int (* 10000 (/ end-diff-price start-price)))
+     :max-diff-price max-diff-price
+     :max-diff-price-rate (int (* 10000 (/ max-diff-price low-price)))}))
 
 (defn get-kline
   "get kline 001 005 ..."
