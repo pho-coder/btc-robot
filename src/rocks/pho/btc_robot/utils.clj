@@ -67,15 +67,36 @@
 (defn dice-once
   "predict trend once"
   [a-kline up-down?]
-  (let [len (.size a-kline)
-        start-price (:start-price (first a-kline))
+  (let [start-price (:start-price (first a-kline))
         end-price (:end-price (last a-kline))
         diff-rate (int (/ (* 10000 (- end-price start-price)) start-price))]
     (case up-down?
       "up" (if (> diff-rate 20)
-             (log/info "buy point at:" (last a-kline)))
+             (do (log/info "buy point at:" (last a-kline))
+                 "bet"))
       "down" (if (< diff-rate -10)
-               (log/info "sell point at:" (last a-kline))))))
+               (do (log/info "sell point at:" (last a-kline))
+                   "bet")))))
+
+(defn trend-now?
+  "judge the last data whether is trending. at least three times up or down. get a time-sorted list return a time-sorted list"
+  [a-kline]
+  (let [reverse-kline (reverse a-kline)
+        trend (:trend (first reverse-kline))
+        cuted-kline (loop [before-kline reverse-kline
+                          after-kline (list)]
+                     (if (empty? before-kline)
+                       after-kline
+                       (do (let [last-one (first before-kline)]
+                             (if (= (:trend last-one)
+                                    trend)
+                               (recur (pop before-kline) (conj after-kline last-one))
+                               (recur (list) after-kline))))))]
+    (if (>= (.size cuted-kline)
+            3)
+      {:trend trend
+       :kline cuted-kline}
+      {:trend "others"})))
 
 (defn dice-them
   "dice the trend by real data"
@@ -136,7 +157,12 @@
      :end-diff-price end-diff-price
      :end-diff-price-rate (int (* 10000 (/ end-diff-price start-price)))
      :max-diff-price max-diff-price
-     :max-diff-price-rate (int (* 10000 (/ max-diff-price low-price)))}))
+     :max-diff-price-rate (int (* 10000 (/ max-diff-price low-price)))
+     :trend (cond
+              (< end-diff-price 0) "down"
+              (> end-diff-price 0) "up"
+              (= end-diff-price 0) "flat"
+              :else (throw Exception "end-diff-price error!"))}))
 
 (defn get-kline
   "get kline 001 005 ..."

@@ -10,6 +10,7 @@
 
 ;; {:datetime :trend :end-price}
 (def ^:dynamic *kline-status* (atom {}))
+;;HOLDING BUYING
 (def ^:dynamic *buy-status* (atom "HOLDING"))
 (def ^:dynamic *chips* (atom {:money 5000 :btc 0}))
 ;; ({:action "buy" :price 12 :volume 1 :type "up" :datetime 2016-01-01 14:20})
@@ -24,9 +25,7 @@
   "update kline status"
   []
   (let [h-trend (utils/history-trend)]
-    (reset! *kline-status* {:datetime (:datetime h-trend)
-                            :trend (:trend h-trend)
-                            :end-price (:end-price h-trend)})))
+    (reset! *kline-status* (map utils/parse-kline-data (utils/get-kline "001")))))
 
 (defn can-buy?
   "if can buy"
@@ -101,6 +100,17 @@
       "BUYING" (if (:re can-sell)
                  (sell last-price (:type can-sell))))))
 
+(defn watching
+  "watch data, dice trend and bet it"
+  []
+  (let [status @*buy-status*
+        kline @*kline-status*
+        trend? (utils/trend-now? kline)]
+    (if (= status "HOLDING")
+      (if (= (:trend trend?) "up")
+        (if (= "bet" (utils/dice-once (:kline trend?) "up"))
+          (buy))))))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
@@ -108,11 +118,11 @@
   (let [access_key (first args)
         secret_key (second args)
         kline-timer (timer/mk-timer)
-        transaction-timer (timer/mk-timer)]
+        watching-timer (timer/mk-timer)]
     (timer/schedule-recurring kline-timer 0 60
                               update-kline-status)
-    (timer/schedule-recurring transaction-timer 10 30
-                              buy-or-sell)
+    (timer/schedule-recurring watching-timer 10 30
+                              watching)
     (while true
       (Thread/sleep 60000)
       (log/info "kline status:" @*kline-status*)
