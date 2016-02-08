@@ -71,12 +71,8 @@
         end-price (:end-price (last a-kline))
         diff-rate (int (/ (* 10000 (- end-price start-price)) start-price))]
     (case up-down?
-      "up" (if (> diff-rate 20)
-             (do (log/info "buy point at:" (last a-kline))
-                 "bet"))
-      "down" (if (< diff-rate -10)
-               (do (log/info "sell point at:" (last a-kline))
-                   "bet")))))
+      "up" (when (> diff-rate 20) (log/info "buy point at:" (last a-kline)) "bet")
+      "down" (when (< diff-rate -20) (log/info "sell point at:" (last a-kline)) "bet"))))
 
 (defn trend-now?
   "judge the last data whether is trending. at least three times up or down. get a time-sorted list return a time-sorted list"
@@ -87,47 +83,16 @@
                           after-kline (list)]
                      (if (empty? before-kline)
                        after-kline
-                       (do (let [last-one (first before-kline)]
-                             (if (= (:trend last-one)
-                                    trend)
-                               (recur (pop before-kline) (conj after-kline last-one))
-                               (recur (list) after-kline))))))]
+                       (let [last-one (first before-kline)]
+                         (if (= (:trend last-one)
+                                trend)
+                           (recur (pop before-kline) (conj after-kline last-one))
+                           (recur (list) after-kline)))))]
     (if (>= (.size cuted-kline)
             3)
       {:trend trend
        :kline cuted-kline}
       {:trend "others"})))
-
-(defn dice-them
-  "dice the trend by real data"
-  [a-kline]
-  (let [trend-step 3
-        a-indexed-kline (map-indexed vector a-kline)
-        start-point (atom nil) ;; {:trend "up" :index 12}
-        trend-now (fn [end-diff-price]
-                    (cond
-                      (> end-diff-price 0) "up"
-                      (< end-diff-price 0) "down"
-                      (= end-diff-price 0) "flat"
-                      :else "others"))
-        reset-start-point! (fn [a-vec]
-                             (let [[index kline] a-vec]
-                               (if (= index 0)
-                                 (reset! start-point {:index 0
-                                                      :trend (trend-now (:end-diff-price kline))})
-                                 (let [this-trend (trend-now (:end-diff-price kline))]
-                                   (if (= this-trend (:trend @start-point))
-                                     (if (and (>= (- (inc index) (:index @start-point)
-                                                     trend-step))
-                                              (or (= this-trend "up")
-                                                  (= this-trend "down")))
-                                       (dice-once (subvec (vec a-kline)
-                                                          (:index @start-point)
-                                                          (inc index))
-                                                  this-trend))
-                                     (reset! start-point {:index index
-                                                          :trend this-trend}))))))]
-    (map reset-start-point! a-indexed-kline)))
 
 (defn parse-kline-data
   "parse kline data from array to map"
@@ -162,34 +127,17 @@
               (< end-diff-price 0) "down"
               (> end-diff-price 0) "up"
               (= end-diff-price 0) "flat"
-              :else (throw Exception "end-diff-price error!"))}))
+              :else (throw (Exception. "end-diff-price error!")))}))
 
 (defn get-kline
   "get kline 001 005 ..."
   [type]
   (let [url (case type
               "001" (str "http://api.huobi.com/staticmarket/btc_kline_" type "_json.js")
-              (throw Exception "kline type error: " type))]
+              (throw (Exception. "kline type error: " type)))]
     (json/read-str (:body (client/get url)))))
 
 (defn get-last-kline
   "get last n kline by type"
   [type last-n]
   (reverse (map parse-kline-data (take last-n (reverse (get-kline type))))))
-
-(defn history-trend
-  "judge trend by last two kline"
-  []
-  (let [kline (reverse (get-core-kline (get-last-kline "001" 10)))
-        last-one (first kline)
-        last-one-trend (:trend last-one)
-        second-last-one-trend (:trend (second kline))]
-    (log/debug kline)
-    {:datetime (:datetime last-one)
-     :end-price (:end-price last-one)
-     :trend (if-not (= last-one-trend second-last-one-trend)
-              "other"
-              (case last-one-trend
-                "flat" "flat"
-                "up" "up"
-                "down" "down"))}))

@@ -24,8 +24,7 @@
 (defn update-kline-status
   "update kline status"
   []
-  (let [h-trend (utils/history-trend)]
-    (reset! *kline-status* (map utils/parse-kline-data (utils/get-kline "001")))))
+  (reset! *kline-status* (map utils/parse-kline-data (utils/get-kline "001"))))
 
 (defn can-buy?
   "if can buy"
@@ -63,29 +62,36 @@
 
 (defn sell
   "sell now"
-  [sell-price type]
-  (reset! *buy-status* "HOLDING")
-  (reset! *actions* (conj @*actions* {:action "sell"
-                                      :price sell-price
-                                      :volume 1
-                                      :datetime (utils/now)
-                                      :type type}))
-  (reset! *chips* {:money (+ (:money @*chips*) sell-price)
-                   :btc 0})
-  (log/info type "sell at:" sell-price))
+  []
+  (let [staticmarket (utils/get-staticmarket)
+        last-price (int (* (:last (:ticker staticmarket)) 100))]
+    (reset! *buy-status* "HOLDING")
+    (reset! *actions* (conj @*actions* {:action "sell"
+                                        :price last-price
+                                        :volume 1
+                                        :datetime (utils/now)}))
+    (reset! *chips* {:money (+ (:money @*chips*) last-price)
+                     :btc 0})
+    (log/info type "sell at:" last-price)))
 
 (defn buy
   "buy now"
-  [buy-price type]
-  (reset! *buy-status* "BUYING")
-  (reset! *actions* (conj @*actions* {:action "buy"
-                                      :price buy-price
-                                      :volume 1
-                                      :datetime (utils/now)
-                                      :type type}))
-  (reset! *chips* {:money (- (:money @*chips*) buy-price)
-                   :btc 1})
-  (log/info type "buy at:" buy-price))
+  [buy-price]
+  (let [staticmarket (utils/get-staticmarket)
+        last-price (int (* (:last (:ticker staticmarket)) 100))
+        diff-rate (int (* 10000 (/ (- last-price buy-price) buy-price)))]
+    (if (> diff-rate 50)
+      (log/info "last price is too higher than 50 NO BUY")
+      (if (< diff-rate -20)
+        (log/info "last prcie is too lower than -20 NO BUY")
+        (do (reset! *actions* (conj @*actions* {:action "buy"
+                                                :price last-price
+                                                :volume 1
+                                                :datetime (utils/now)}))
+            (reset! *chips* {:money (- (:money @*chips*) last-price)
+                             :btc 1})
+            (reset! *buy-status* "BUYING")
+            (log/info "buy at:" last-price))))))
 
 (defn buy-or-sell
   "buy or sell"
@@ -105,11 +111,17 @@
   []
   (let [status @*buy-status*
         kline @*kline-status*
+        last-one (last kline)
+        last-end-price (:end-price last-one)
         trend? (utils/trend-now? kline)]
     (if (= status "HOLDING")
       (if (= (:trend trend?) "up")
         (if (= "bet" (utils/dice-once (:kline trend?) "up"))
-          (buy))))))
+          (buy last-end-price))))
+    (if (= status "BUYING")
+      (if (= (:trend trend?) "down")
+        (if (= "bet" (utils/dice-once (:kline trend?) "down"))
+          (sell))))))
 
 (defn -main
   "I don't do a whole lot ... yet."
