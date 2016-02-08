@@ -92,7 +92,8 @@
             3)
       {:trend trend
        :kline cuted-kline}
-      {:trend "others"})))
+      {:trend "others"
+       :kline cuted-kline})))
 
 (defn parse-kline-data
   "parse kline data from array to map"

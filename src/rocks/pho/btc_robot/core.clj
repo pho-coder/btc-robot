@@ -114,6 +114,7 @@
         last-one (last kline)
         last-end-price (:end-price last-one)
         trend? (utils/trend-now? kline)]
+    (log/info trend?)
     (if (= status "HOLDING")
       (if (= (:trend trend?) "up")
         (if (= "bet" (utils/dice-once (:kline trend?) "up"))
@@ -137,7 +138,6 @@
                               watching)
     (while true
       (Thread/sleep 60000)
-      (log/info "kline status:" @*kline-status*)
       (log/info "chips:" @*chips*)
       (log/info "actions:" @*actions*)
       (log/info "buy-status:" @*buy-status*))))
