@@ -12,7 +12,7 @@
 (def ^:dynamic *kline-status* (atom {}))
 ;;HOLDING BUYING
 (def ^:dynamic *buy-status* (atom "HOLDING"))
-(def ^:dynamic *chips* (atom {:money 5000 :btc 0}))
+(def ^:dynamic *chips* (atom {:money 500000 :btc 0}))
 ;; ({:action "buy" :price 12 :volume 1 :type "up" :datetime 2016-01-01 14:20})
 (def ^:dynamic *actions* (atom (list)))
 
