@@ -15,6 +15,9 @@
 (def ^:dynamic *chips* (atom {:money 500000 :btc 0}))
 ;; ({:action "buy" :price 12 :volume 1 :type "up" :datetime 2016-01-01 14:20})
 (def ^:dynamic *actions* (atom (list)))
+;; {:price :datetime}
+(def ^:dynamic *last-top-price* (atom nil))
+(def ^:dynamic *last-low-price* (atom nil))
 
 (def BUY-TOP-RATE 15)
 (def TRANSACTION-TYPE-UP "up")
@@ -25,40 +28,6 @@
   "update kline status"
   []
   (reset! *kline-status* (map utils/parse-kline-data (utils/get-kline "001"))))
-
-(defn can-buy?
-  "if can buy"
-  [buy-price]
-  (if (not= @*buy-status* "HOLDING")
-    {:re false}
-    (let [last-end-price (:end-price @*kline-status*)
-          diff-rate (int (* 100 (/ (- buy-price last-end-price) last-end-price)))]
-      (if (> diff-rate BUY-TOP-RATE)
-        (do (log/error "buy price is too high!" diff-rate "more than" BUY-TOP-RATE)
-            {:re false})
-        (if (= (:trend @*kline-status*) "up")
-          {:re true
-           :type TRANSACTION-TYPE-UP}
-          {:re false})))))
-
-(defn can-sell?
-  "if can sell"
-  [sell-price]
-  (if (not= @*buy-status* "BUYING")
-    false
-    (let [trend (:trend @*kline-status*)]
-      (if (= trend "up")
-        {:re false}
-        (let [buy-price (:price (first @*actions*))
-              diff-rate (int (* 100 (/ (- buy-price sell-price) buy-price)))]
-          (if (> diff-rate BUY-TOP-RATE)
-            (do (log/info "price is too low, sell!")
-                {:re true
-                 :type TRANSACTION-TYPE-FORCE})
-            (if (= trend "down")
-              {:re true
-               :type TRANSACTION-TYPE-DOWN}
-              {:re false})))))))
 
 (defn sell
   "sell now"
@@ -93,19 +62,6 @@
             (reset! *buy-status* "BUYING")
             (log/info "buy at:" last-price))))))
 
-(defn buy-or-sell
-  "buy or sell"
-  []
-  (let [staticmarket (utils/get-staticmarket)
-        last-price (:last (:ticker staticmarket))
-        can-buy (can-buy? last-price)
-        can-sell (can-sell? last-price)]
-    (case @*buy-status*
-      "HOLDING" (if (:re can-buy)
-                  (buy last-price (:type can-buy)))
-      "BUYING" (if (:re can-sell)
-                 (sell last-price (:type can-sell))))))
-
 (defn watching
   "watch data, dice trend and bet it"
   []
@@ -115,6 +71,16 @@
         last-end-price (:end-price last-one)
         trend? (utils/trend-now? kline)]
     (log/info trend?)
+    (let [trend (:trend trend?)
+          last-kline (last (:kline trend?))
+          end-price (:end-price last-kline)
+          datetime (:datetime last-kline)]
+      (if (= "up" trend)
+        (reset! *last-top-price* {:price end-price
+                                  :datetime datetime}))
+      (if (= "down" trend)
+        (reset! *last-low-price* {:price end-price
+                                  :datetime datetime})))
     (if (= status "HOLDING")
       (if (= (:trend trend?) "up")
         (if (= "bet" (utils/dice-once (:kline trend?) "up"))
@@ -138,6 +104,8 @@
                               watching)
     (while true
       (Thread/sleep 60000)
+      (log/info "last top price:" @*last-top-price*)
+      (log/info "last low price:" @*last-low-price*)
       (log/info "chips:" @*chips*)
       (log/info "actions:" @*actions*)
       (log/info "buy-status:" @*buy-status*))))
