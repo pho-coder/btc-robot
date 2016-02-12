@@ -98,14 +98,18 @@
         watching-timer (timer/mk-timer)]
     (reset! *access-key* access-key)
     (reset! *secret-key* secret-key)
-    (let [account-info (utils/get-account-info @*access-key* @*secret-key*)]
-      (log/info account-info))
+    (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
+          available-cny-display (int (* 100 (:available_cny_display account-info)))
+          available-btc-display (:available_btc_display account-info)]
+      (log/info account-info)
+      (reset! *chips* {:money available-cny-display
+                       :btc available-btc-display}))
     (timer/schedule-recurring kline-timer 0 60
                               update-kline-status)
     (timer/schedule-recurring watching-timer 10 30
                               watching)
     (while true
-      (Thread/sleep 60000)
+      (Thread/sleep 5000)
       (log/info "last top price:" @*last-top-price*)
       (log/info "last low price:" @*last-low-price*)
       (log/info "chips:" @*chips*)
