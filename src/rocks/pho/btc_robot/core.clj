@@ -108,11 +108,12 @@
                               update-kline-status)
     (timer/schedule-recurring watching-timer 10 30
                               watching)
+    (Thread/sleep 5000)
     (while true
-      (Thread/sleep 5000)
       (log/info "last top price:" @*last-top-price*)
       (log/info "last low price:" @*last-low-price*)
       (log/info "chips:" @*chips*)
       (log/info "actions:" @*actions*)
-      (log/info "buy-status:" @*buy-status*))))
+      (log/info "buy-status:" @*buy-status*)
+      (Thread/sleep 60000))))
 

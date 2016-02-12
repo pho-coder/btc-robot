@@ -32,6 +32,46 @@
                                                       :sign sign}}))
                    :key-fn keyword)))
 
+(defn buy-market
+  "buy now"
+  [access-key secret-key amount]
+  (let [unix-time (int (/ (System/currentTimeMillis) 1000))
+        sign-str (str "access_key=" access-key
+                      "&amount=" amount
+                      "&coin_type=1"
+                      "&created=" unix-time
+                      "&method=buy_market"
+                      "&secret_key=" secret-key)
+        sign (digest/md5 sign-str)]
+    (json/read-str (:body (client/post "https://api.huobi.com/apiv3"
+                                       {:headers {"Content-Type" "application/x-www-form-urlencoded"}
+                                        :form-params {:method "buy_market"
+                                                      :access_key access-key
+                                                      :coin_type 1
+                                                      :amount amount
+                                                      :created unix-time
+                                                      :sign sign}})))))
+
+(defn sell-market
+  "sell now"
+  [access-key secret-key amount]
+  (let [unix-time (int (/ (System/currentTimeMillis) 1000))
+        sign-str (str "access_key=" access-key
+                      "&amount=" amount
+                      "&coin_type=1"
+                      "&created=" unix-time
+                      "&method=sell_market"
+                      "&secret_key=" secret-key)
+        sign (digest/md5 sign-str)]
+    (json/read-str (:body (client/post "https://api.huobi.com/apiv3"
+                                       {:headers {"Content-Type" "application/x-www-form-urlencoded"}
+                                        :form-params {:method "sell_market"
+                                                      :access_key access-key
+                                                      :coin_type 1
+                                                      :amount amout
+                                                      :created unix-time
+                                                      :sign sign}})))))
+
 (defn get-staticmarket
   "get realtime market"
   []
