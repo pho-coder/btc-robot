@@ -27,19 +27,34 @@
   []
   (reset! *kline-status* (map utils/parse-kline-data (utils/get-kline "001"))))
 
+(defn reset-new-account-info!
+  "reset chips from new account info"
+  []
+  (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
+        available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
+        available-btc-display (Double/parseDouble (:available_btc_display account-info))]
+    (log/info account-info)
+    (reset! *chips* {:money available-cny-display
+                     :btc available-btc-display})))
+
 (defn sell
   "sell now"
   []
   (let [staticmarket (utils/get-staticmarket)
-        last-price (int (* (:last (:ticker staticmarket)) 100))]
-    (reset! *buy-status* "HOLDING")
-    (reset! *actions* (conj @*actions* {:action "sell"
-                                        :price last-price
-                                        :volume 1
-                                        :datetime (utils/now)}))
-    (reset! *chips* {:money (+ (:money @*chips*) last-price)
-                     :btc 0})
-    (log/info type "sell at:" last-price)))
+        last-price (int (* (:last (:ticker staticmarket)) 100))
+        sell-result (utils/sell-market @*access-key* @*secret-key* (:btc @*chips*))
+        _ (log/info sell-result)
+        result (:result sell-result)
+        id (:id sell-result)]
+    (if (= result "success")
+      (do (reset! *buy-status* "HOLDING")
+          (reset! *actions* (conj @*actions* {:action "sell"
+                                              :amount (:btc @*chips*)
+                                              :id id
+                                              :datetime (utils/now)}))
+          (reset-new-account-info!)
+          (log/info type "sell at:" last-price))
+      (log/error "sell market error!"))))
 
 (defn buy
   "buy now"
@@ -51,14 +66,19 @@
       (log/info "last price is too higher than 50 NO BUY")
       (if (< diff-rate -20)
         (log/info "last prcie is too lower than -20 NO BUY")
-        (do (reset! *actions* (conj @*actions* {:action "buy"
-                                                :price last-price
-                                                :volume 1
-                                                :datetime (utils/now)}))
-            (reset! *chips* {:money (- (:money @*chips*) last-price)
-                             :btc 1})
-            (reset! *buy-status* "BUYING")
-            (log/info "buy at:" last-price))))))
+        (let [buy-result (utils/buy-market @*access-key* @*secret-key* 3000)
+              _ (log/info buy-result)
+              result (:reuslt buy-result)
+              id (:id buy-result)]
+          (if (= result "success")
+            (do (reset! *buy-status* "BUYING")
+                (reset! *actions* (conj @*actions* {:action "buy"
+                                                    :amount 3000
+                                                    :id id
+                                                    :datetime (utils/now)}))
+                (reset-new-account-info!)
+                (log/info "buy at:" last-price))
+            (log/error "buy market error!")))))))
 
 (defn watching
   "watch data, dice trend and bet it"
@@ -98,12 +118,7 @@
         watching-timer (timer/mk-timer)]
     (reset! *access-key* access-key)
     (reset! *secret-key* secret-key)
-    (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
-          available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
-          available-btc-display (Double/parseDouble (:available_btc_display account-info))]
-      (log/info account-info)
-      (reset! *chips* {:money available-cny-display
-                       :btc available-btc-display}))
+    (reset-new-account-info!)
     (timer/schedule-recurring kline-timer 0 60
                               update-kline-status)
     (timer/schedule-recurring watching-timer 10 30

@@ -50,7 +50,8 @@
                                                       :coin_type 1
                                                       :amount amount
                                                       :created unix-time
-                                                      :sign sign}})))))
+                                                      :sign sign}}))
+                   :key-fn keyword)))
 
 (defn sell-market
   "sell now"
@@ -70,7 +71,8 @@
                                                       :coin_type 1
                                                       :amount amount
                                                       :created unix-time
-                                                      :sign sign}})))))
+                                                      :sign sign}}))
+                   :key-fn keyword)))
 
 (defn get-staticmarket
   "get realtime market"
