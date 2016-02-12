@@ -19,10 +19,8 @@
 (def ^:dynamic *last-top-price* (atom nil))
 (def ^:dynamic *last-low-price* (atom nil))
 
-(def BUY-TOP-RATE 15)
-(def TRANSACTION-TYPE-UP "up")
-(def TRANSACTION-TYPE-DOWN "down")
-(def TRANSACTION-TYPE-FORCE "force")
+(def ^:dynamic *access-key* (atom nil))
+(def ^:dynamic *secret-key* (atom nil))
 
 (defn update-kline-status
   "update kline status"
@@ -94,10 +92,14 @@
   "I don't do a whole lot ... yet."
   [& args]
   (log/info "Hello, World!")
-  (let [access_key (first args)
-        secret_key (second args)
+  (let [access-key (first args)
+        secret-key (second args)
         kline-timer (timer/mk-timer)
         watching-timer (timer/mk-timer)]
+    (reset! *access-key* access-key)
+    (reset! *secret-key* secret-key)
+    (let [account-info (utils/get-account-info @*access-key* @*secret-key*)]
+      (log/info account-info))
     (timer/schedule-recurring kline-timer 0 60
                               update-kline-status)
     (timer/schedule-recurring watching-timer 10 30
