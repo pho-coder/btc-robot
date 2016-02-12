@@ -68,7 +68,7 @@
                                         :form-params {:method "sell_market"
                                                       :access_key access-key
                                                       :coin_type 1
-                                                      :amount amout
+                                                      :amount amount
                                                       :created unix-time
                                                       :sign sign}})))))
 
