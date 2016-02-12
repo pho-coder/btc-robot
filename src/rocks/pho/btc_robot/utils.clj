@@ -29,7 +29,8 @@
                                         :form-params {:method "get_account_info"
                                                       :access_key access_key
                                                       :created unix-time
-                                                      :sign sign}})))))
+                                                      :sign sign}}))
+                   :key-fn keyword)))
 
 (defn get-staticmarket
   "get realtime market"
