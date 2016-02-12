@@ -99,10 +99,8 @@
     (reset! *access-key* access-key)
     (reset! *secret-key* secret-key)
     (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
-          _ (log/info account-info)
-          _ (log/info (type (:available_cny_display account-info)))
-          available-cny-display (int (* 100 (:available_cny_display account-info)))
-          available-btc-display (:available_btc_display account-info)]
+          available-cny-display (int (* 100 (Integer/parseInt (:available_cny_display account-info))))
+          available-btc-display (Integer/parseInt (:available_btc_display account-info))]
       (log/info account-info)
       (reset! *chips* {:money available-cny-display
                        :btc available-btc-display}))
