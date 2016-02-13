@@ -54,7 +54,8 @@
                                               :datetime (utils/now)}))
           (reset-new-account-info!)
           (log/info type "sell at:" last-price))
-      (log/error "sell market error!"))))
+      (do (log/error "sell market error!")
+          (System/exit 1)))))
 
 (defn buy
   "buy now"
@@ -68,7 +69,7 @@
         (log/info "last prcie is too lower than -20 NO BUY")
         (let [buy-result (utils/buy-market @*access-key* @*secret-key* 3000)
               _ (log/info buy-result)
-              result (:reuslt buy-result)
+              result (:result buy-result)
               id (:id buy-result)]
           (if (= result "success")
             (do (reset! *buy-status* "BUYING")
@@ -78,7 +79,8 @@
                                                     :datetime (utils/now)}))
                 (reset-new-account-info!)
                 (log/info "buy at:" last-price))
-            (log/error "buy market error!")))))))
+            (do (log/error "buy market error!")
+                (System/exit 1))))))))
 
 (defn watching
   "watch data, dice trend and bet it"
