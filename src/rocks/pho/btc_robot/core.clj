@@ -55,7 +55,8 @@
           (reset-new-account-info!)
           (log/info type "sell at:" last-price))
       (do (log/error "sell market error!")
-          (System/exit 1)))))
+          (if (not= "1" (str (:code sell-result)))
+            (System/exit 1))))))
 
 (defn buy
   "buy now"
@@ -80,7 +81,8 @@
                 (reset-new-account-info!)
                 (log/info "buy at:" last-price))
             (do (log/error "buy market error!")
-                (System/exit 1))))))))
+                (if (not= "1" (str (:code buy-result)))
+                  (System/exit 1)))))))))
 
 (defn watching
   "watch data, dice trend and bet it"
