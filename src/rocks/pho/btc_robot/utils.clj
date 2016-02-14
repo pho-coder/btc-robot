@@ -114,8 +114,8 @@
         end-price (:end-price (last a-kline))
         diff-rate (int (/ (* 10000 (- end-price start-price)) start-price))]
     (case up-down?
-      "up" (when (> diff-rate 20) (log/info "buy point at:" (last a-kline)) "bet")
-      "down" (when (< diff-rate -20) (log/info "sell point at:" (last a-kline)) "bet"))))
+      "up" (when (> diff-rate 10) (log/info "buy point at:" (last a-kline)) "bet")
+      "down" (when (< diff-rate -10) (log/info "sell point at:" (last a-kline)) "bet"))))
 
 (defn trend-now?
   "judge the last data whether is trending. at least three times up or down. get a time-sorted list return a time-sorted list"

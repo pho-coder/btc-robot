@@ -64,8 +64,8 @@
   (let [staticmarket (utils/get-staticmarket)
         last-price (int (* (:last (:ticker staticmarket)) 100))
         diff-rate (int (* 10000 (/ (- last-price buy-price) buy-price)))]
-    (if (> diff-rate 50)
-      (log/info "last price is too higher than 50 NO BUY")
+    (if (> diff-rate 30)
+      (log/info "last price is too higher than 30 NO BUY")
       (if (< diff-rate -20)
         (log/info "last prcie is too lower than -20 NO BUY")
         (let [buy-result (utils/buy-market @*access-key* @*secret-key* 3000)
