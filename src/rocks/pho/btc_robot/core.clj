@@ -123,9 +123,9 @@
     (reset! *access-key* access-key)
     (reset! *secret-key* secret-key)
     (reset-new-account-info!)
-    (timer/schedule-recurring kline-timer 0 60
+    (timer/schedule-recurring kline-timer 0 40
                               update-kline-status)
-    (timer/schedule-recurring watching-timer 10 30
+    (timer/schedule-recurring watching-timer 10 25
                               watching)
     (Thread/sleep 5000)
     (while true
