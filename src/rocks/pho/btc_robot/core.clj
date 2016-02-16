@@ -12,7 +12,9 @@
 (def ^:dynamic *kline-status* (atom {}))
 ;;HOLDING BUYING
 (def ^:dynamic *buy-status* (atom "HOLDING"))
-(def ^:dynamic *chips* (atom {:money 500000 :btc 0}))
+(def ^:dynamic *chips* (atom {:money 500000 :btc 0 :net-asset 500000}))
+;;({:right? true :result 100 :buy-time :sell-time } {:right? false :result -100})
+(def ^:dynamic *dice-results* (atom (list)))
 ;; ({:action "buy" :price 12 :volume 1 :type "up" :datetime 2016-01-01 14:20})
 (def ^:dynamic *actions* (atom (list)))
 ;; {:price :datetime}
@@ -21,6 +23,38 @@
 
 (def ^:dynamic *access-key* (atom nil))
 (def ^:dynamic *secret-key* (atom nil))
+
+(defn dice-result!
+  ""
+  []
+  (let [actions-now @*actions*
+        dice-results @*dice-results*
+        actions-size (.size actions-now)
+        dice-results-size (.size dice-results)
+        diff-size (- actions-size (* 2 dice-results-size))]
+    (if (>= diff-size 2)
+      (let [waitings (reverse (if (odd? diff-size)
+                                (subvec (vec actions-now) 1 diff-size)
+                                (subvec (vec actions-now) 0 (dec diff-size))))]
+        (loop [w waitings
+               tmp {}]
+          (if-not (empty? w)
+            (let [one (first w)
+                  action (:action one)
+                  datetime (:datetime one)
+                  net-asset (:net-asset one)]
+              (case action
+                "buy" (recur (pop w) {:buy-time datetime
+                                      :net-asset net-asset})
+                "sell" (let [result (- net-asset (:net-asset tmp))
+                             right? (if (pos? result)
+                                      true
+                                      false)]
+                         (swap! *dice-results* conj {:right? right?
+                                                     :result result
+                                                     :buy-time (:buy-time tmp)
+                                                     :sell-time datetime})
+                         (recur (pop w) {}))))))))))
 
 (defn update-kline-status
   "update kline status"
@@ -32,10 +66,12 @@
   []
   (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
         available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
-        available-btc-display (Double/parseDouble (:available_btc_display account-info))]
+        available-btc-display (Double/parseDouble (:available_btc_display account-info))
+        net-asset (int (* 100 (Double/parseDouble (:net_asset account-info))))]
     (log/info account-info)
     (reset! *chips* {:money available-cny-display
-                     :btc available-btc-display})))
+                     :btc available-btc-display
+                     :net-asset net-asset})))
 
 (defn sell
   "sell now"
@@ -47,12 +83,19 @@
         result (:result sell-result)
         id (:id sell-result)]
     (if (= result "success")
-      (do (reset! *buy-status* "HOLDING")
-          (reset! *actions* (conj @*actions* {:action "sell"
-                                              :amount (:btc @*chips*)
-                                              :id id
-                                              :datetime (utils/now)}))
-          (reset-new-account-info!)
+      (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
+            available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
+            available-btc-display (Double/parseDouble (:available_btc_display account-info))
+            net-asset (int (* 100 (Double/parseDouble (:net_asset account-info))))]
+        (reset! *buy-status* "HOLDING")
+        (reset! *actions* (conj @*actions* {:action "sell"
+                                            :amount (:btc @*chips*)
+                                            :id id
+                                            :datetime (utils/now)
+                                            :net-asset net-asset}))
+        (reset! *chips* {:money available-cny-display
+                         :btc available-btc-display
+                         :net-asset net-asset})
           (log/info type "sell at:" last-price))
       (do (log/error "sell market error!")
           (if (not= "1" (str (:code sell-result)))
@@ -74,13 +117,20 @@
               result (:result buy-result)
               id (:id buy-result)]
           (if (= result "success")
-            (do (reset! *buy-status* "BUYING")
-                (reset! *actions* (conj @*actions* {:action "buy"
-                                                    :amount money
-                                                    :id id
-                                                    :datetime (utils/now)}))
-                (reset-new-account-info!)
-                (log/info "buy at:" last-price))
+            (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
+                  available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
+                  available-btc-display (Double/parseDouble (:available_btc_display account-info))
+                  net-asset (int (* 100 (Double/parseDouble (:net_asset account-info))))]
+              (reset! *buy-status* "BUYING")
+              (reset! *actions* (conj @*actions* {:action "buy"
+                                                  :amount money
+                                                  :id id
+                                                  :datetime (utils/now)
+                                                  :net-asset net-asset}))
+              (reset! *chips* {:money available-cny-display
+                               :btc available-btc-display
+                               :net-asset net-asset})
+              (log/info "buy at:" last-price))
             (do (log/error "buy market error!")
                 (if (not= "1" (str (:code buy-result)))
                   (System/exit 1)))))))))
@@ -120,7 +170,8 @@
   (let [access-key (first args)
         secret-key (second args)
         kline-timer (timer/mk-timer)
-        watching-timer (timer/mk-timer)]
+        watching-timer (timer/mk-timer)
+        dice-result-timer (timer/mk-timer)]
     (reset! *access-key* access-key)
     (reset! *secret-key* secret-key)
     (reset-new-account-info!)
@@ -128,6 +179,8 @@
                               update-kline-status)
     (timer/schedule-recurring watching-timer 10 25
                               watching)
+    (timer/schedule-recurring dice-result-timer 30 60
+                              dice-result!)
     (Thread/sleep 5000)
     (while true
       (log/info "last top price:" @*last-top-price*)
@@ -135,5 +188,6 @@
       (log/info "chips:" @*chips*)
       (log/info "actions:" @*actions*)
       (log/info "buy-status:" @*buy-status*)
+      (log/info "dice result:" @*dice-results*)
       (Thread/sleep 60000))))
 
