@@ -68,14 +68,15 @@
       (log/info "last price is too higher than 30 NO BUY")
       (if (< diff-rate -20)
         (log/info "last prcie is too lower than -20 NO BUY")
-        (let [buy-result (utils/buy-market @*access-key* @*secret-key* 3000)
+        (let [money (int (/ (:money @*chips*) 100))
+              buy-result (utils/buy-market @*access-key* @*secret-key* money)
               _ (log/info buy-result)
               result (:result buy-result)
               id (:id buy-result)]
           (if (= result "success")
             (do (reset! *buy-status* "BUYING")
                 (reset! *actions* (conj @*actions* {:action "buy"
-                                                    :amount 3000
+                                                    :amount money
                                                     :id id
                                                     :datetime (utils/now)}))
                 (reset-new-account-info!)

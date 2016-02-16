@@ -112,10 +112,15 @@
   [a-kline up-down?]
   (let [start-price (:start-price (first a-kline))
         end-price (:end-price (last a-kline))
-        diff-rate (int (/ (* 10000 (- end-price start-price)) start-price))]
+        diff-price (- end-price start-price)
+        diff-rate (int (/ (* 10000 diff-price) start-price))]
     (case up-down?
-      "up" (when (> diff-rate 20) (log/info "buy point at:" a-kline) "bet")
-      "down" (when (< diff-rate -10) (log/info "sell point at:" a-kline) "bet"))))
+      "up" (when (> diff-rate 20)
+             (log/info "buy point at:" a-kline "diff price:" diff-price)
+             "bet")
+      "down" (when (< diff-rate -10)
+               (log/info "sell point at:" a-kline "diff price:" diff-price)
+               "bet"))))
 
 (defn trend-now?
   "judge the last data whether is trending. at least three times up or down. get a time-sorted list return a time-sorted list"
