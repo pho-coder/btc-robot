@@ -96,7 +96,7 @@
         (reset! *chips* {:money available-cny-display
                          :btc available-btc-display
                          :net-asset net-asset})
-          (log/info type "sell at:" last-price))
+          (log/info "sell at:" last-price))
       (do (log/error "sell market error!")
           (if (not= "1" (str (:code sell-result)))
             (System/exit 1))))))
@@ -139,7 +139,7 @@
   "watch data, dice trend and bet it"
   []
   (let [status @*buy-status*
-        kline @*kline-status*
+        kline (update-kline-status)
         last-one (last kline)
         last-end-price (:end-price last-one)
         trend? (utils/trend-now? kline)]
@@ -175,9 +175,7 @@
     (reset! *access-key* access-key)
     (reset! *secret-key* secret-key)
     (reset-new-account-info!)
-    (timer/schedule-recurring kline-timer 0 40
-                              update-kline-status)
-    (timer/schedule-recurring watching-timer 10 25
+    (timer/schedule-recurring watching-timer 0 30
                               watching)
     (timer/schedule-recurring dice-result-timer 30 60
                               dice-result!)
