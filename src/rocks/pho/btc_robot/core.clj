@@ -35,7 +35,7 @@
     (if (>= diff-size 2)
       (let [waitings (reverse (if (odd? diff-size)
                                 (subvec (vec actions-now) 1 diff-size)
-                                (subvec (vec actions-now) 0 (dec diff-size))))]
+                                (subvec (vec actions-now) 0 diff-size)))]
         (loop [w waitings
                tmp {}]
           (if-not (empty? w)
