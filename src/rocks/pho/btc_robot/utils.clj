@@ -137,7 +137,7 @@
                            (recur (pop before-kline) (conj after-kline last-one))
                            (recur (list) after-kline)))))]
     (if (>= (.size cuted-kline)
-            2)
+            3)
       {:trend trend
        :kline cuted-kline}
       {:trend "others"
