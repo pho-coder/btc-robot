@@ -109,7 +109,7 @@
 
 (defn dice-once
   "predict trend once"
-  [a-kline up-down?]
+  [a-kline up-down? now-one]
   (let [start-price (:start-price (first a-kline))
         end-price (:end-price (last a-kline))
         diff-price (- end-price start-price)
@@ -185,6 +185,10 @@
               "001" (str "http://api.huobi.com/staticmarket/btc_kline_" type "_json.js")
               (throw (Exception. "kline type error: " type)))]
     (json/read-str (:body (client/get url)))))
+
+(defn get-001-kline
+  []
+  (map parse-kline-data (get-kline "001")))
 
 (defn get-last-kline
   "get last n kline by type"
