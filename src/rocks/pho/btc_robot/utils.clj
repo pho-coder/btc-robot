@@ -110,16 +110,30 @@
 (defn dice-once
   "predict trend once"
   [a-kline up-down? now-one]
-  (let [start-price (:start-price (first a-kline))
-        end-price (:end-price (last a-kline))
+  (let [UP-LINE 200
+        DOWN-LINE -300
+        last-one (last a-kline)
+        start-price (:start-price (first a-kline))
+        end-price (:end-price last-one)
         diff-price (- end-price start-price)
-        diff-rate (int (/ (* 10000 diff-price) start-price))]
+        diff-rate (int (/ (* 10000 diff-price) start-price))
+        last-volume (:volume last-one)
+        now-volume (:volume now-one)]
     (case up-down?
-      "up" (when (> diff-rate 20)
-             (log/info "buy point at:" a-kline "diff price:" diff-price)
-             "bet")
-      "down" (when (< diff-rate -10)
+      "up" (if (and (> diff-price UP-LINE) (< now-volume (* last-volume 3)))
+             (do (log/info "buy point at:" a-kline "diff price:" diff-price)
+                 "bet")
+             (do (log/info "dice false!")
+                 (if (<= diff-price UP-LINE)
+                   (log/info "diff price is too low than" UP-LINE "NO BUY"))
+                 (if (>= now-volume (* last-volume 3))
+                   (log/info "volume is higher than triple NO BUY"))))
+      "down" (when (or (< diff-price DOWN-LINE) (> now-volume (* last-volume 3)))
                (log/info "sell point at:" a-kline "diff price:" diff-price)
+               (if (< diff-price DOWN-LINE)
+                 (log/info "diff price is too low than" DOWN-LINE "SELL"))
+               (if (> now-volume (* last-volume 3))
+                 (log/info "volume is higher than triple SELL"))
                "bet"))))
 
 (defn trend-now?
@@ -128,14 +142,14 @@
   (let [reverse-kline (reverse a-kline)
         trend (:trend (first reverse-kline))
         cuted-kline (loop [before-kline reverse-kline
-                          after-kline (list)]
-                     (if (empty? before-kline)
-                       after-kline
-                       (let [last-one (first before-kline)]
-                         (if (= (:trend last-one)
-                                trend)
-                           (recur (pop before-kline) (conj after-kline last-one))
-                           (recur (list) after-kline)))))]
+                           after-kline (list)]
+                      (if (empty? before-kline)
+                        after-kline
+                        (let [last-one (first before-kline)]
+                          (if (= (:trend last-one)
+                                 trend)
+                            (recur (pop before-kline) (conj after-kline last-one))
+                            (recur (list) after-kline)))))]
     (if (>= (.size cuted-kline)
             3)
       {:trend trend

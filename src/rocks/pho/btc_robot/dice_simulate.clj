@@ -63,18 +63,18 @@
               buy-result {:result "success" :id "t1"}
               result (:result buy-result)
               id (:id buy-result)]
-          (if (= result "success")
-            (do (reset! *buy-status* "BUYING")
-                (reset! *actions* (conj @*actions* {:action "buy"
-                                                    :amount money
-                                                    :id id
-                                                    :datetime (:datetime now-one)
-                                                    :net-asset money}))
-                (reset! *chips* {:money 0
-                                 :btc (double (/ (* money 100) last-price))
-                                 :net-asset money})
-                (prn "buy at:" last-price)
-                (prn @*chips*))))))))
+          (when (= result "success")
+            (reset! *buy-status* "BUYING")
+            (reset! *actions* (conj @*actions* {:action "buy"
+                                                :amount money
+                                                :id id
+                                                :datetime (:datetime now-one)
+                                                :net-asset money}))
+            (reset! *chips* {:money 0
+                             :btc (double (/ (* money 100) last-price))
+                             :net-asset money})
+            (prn "buy at:" last-price)
+            (prn @*chips*)))))))
 
 (defn sell-simulate
   [now-one]
@@ -85,18 +85,18 @@
         result (:result sell-result)
         id (:id sell-result)
         money (* (:btc @*chips*) (double (/ last-price 100)))]
-    (if (= result "success")
-      (do (reset! *buy-status* "HOLDING")
-          (reset! *actions* (conj @*actions* {:action "sell"
-                                              :amount (:btc @*chips*)
-                                              :id id
-                                              :datetime (:datetime now-one)
-                                              :net-asset money}))
-          (reset! *chips* {:money money
-                           :btc 0
-                           :net-asset money})
-          (prn "sell at:" last-price)
-          (prn @*chips*)))))
+    (when (= result "success")
+      (reset! *buy-status* "HOLDING")
+      (reset! *actions* (conj @*actions* {:action "sell"
+                                          :amount (:btc @*chips*)
+                                          :id id
+                                          :datetime (:datetime now-one)
+                                          :net-asset money}))
+      (reset! *chips* {:money money
+                       :btc 0
+                       :net-asset money})
+      (prn "sell at:" last-price)
+      (prn @*chips*))))
 
 (defn diff-kline-staticmarket
   []
