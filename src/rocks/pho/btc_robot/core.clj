@@ -102,11 +102,10 @@
             (System/exit 1))))))
 
 (defn buy
-  ("default retry times: 3"
-   [now-one]
+  "buy now default retry times: 3"
+  ([now-one]
    (buy now-one 5))
-  ("buy now"
-   [now-one retry-times]
+  ([now-one retry-times]
    (when (pos? retry-times)
      (let [staticmarket (utils/get-staticmarket)
            last-price (int (* (:last (:ticker staticmarket)) 100))
