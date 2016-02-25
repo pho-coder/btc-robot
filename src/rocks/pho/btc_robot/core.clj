@@ -74,36 +74,41 @@
                      :net-asset net-asset})))
 
 (defn sell
-  "sell now"
-  []
-  (let [staticmarket (utils/get-staticmarket)
-        last-price (int (* (:last (:ticker staticmarket)) 100))
-        sell-result (utils/sell-market @*access-key* @*secret-key* (:btc @*chips*))
-        _ (log/info sell-result)
-        result (:result sell-result)
-        id (:id sell-result)]
-    (if (= result "success")
-      (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
-            available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
-            available-btc-display (Double/parseDouble (:available_btc_display account-info))
-            net-asset (int (* 100 (Double/parseDouble (:net_asset account-info))))]
-        (reset! *buy-status* "HOLDING")
-        (reset! *actions* (conj @*actions* {:action "sell"
-                                            :amount (:btc @*chips*)
-                                            :id id
-                                            :datetime (utils/now)
-                                            :net-asset net-asset
-                                            :price (/ net-asset (:btc @*chips*))}))
-        (reset! *chips* {:money available-cny-display
-                         :btc available-btc-display
-                         :net-asset net-asset})
-        (log/info "sell at:" last-price))
-      (do (log/error "sell market error!")
-          (if (not= "1" (str (:code sell-result)))
-            (System/exit 1))))))
+  "sell now default retry times: 5"
+  ([]
+   (sell 5))
+  ([retry-times]
+   (when (pos? retry-times)
+     (let [staticmarket (utils/get-staticmarket)
+           last-price (int (* (:last (:ticker staticmarket)) 100))
+           sell-result (utils/sell-market @*access-key* @*secret-key* (:btc @*chips*))
+           _ (log/info sell-result)
+           result (:result sell-result)
+           id (:id sell-result)]
+       (if (= result "success")
+         (let [account-info (utils/get-account-info @*access-key* @*secret-key*)
+               available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
+               available-btc-display (Double/parseDouble (:available_btc_display account-info))
+               net-asset (int (* 100 (Double/parseDouble (:net_asset account-info))))]
+           (reset! *buy-status* "HOLDING")
+           (reset! *actions* (conj @*actions* {:action "sell"
+                                               :amount (:btc @*chips*)
+                                               :id id
+                                               :datetime (utils/now)
+                                               :net-asset net-asset
+                                               :price (/ net-asset (:btc @*chips*))}))
+           (reset! *chips* {:money available-cny-display
+                            :btc available-btc-display
+                            :net-asset net-asset})
+           (log/info "sell at:" last-price))
+         (do (log/error "sell market error!")
+             (if (= "1" (str (:code sell-result)))
+               (do (Thread/sleep 500)
+                   (sell (dec retry-times)))
+               (System/exit 1))))))))
 
 (defn buy
-  "buy now default retry times: 3"
+  "buy now default retry times: 5"
   ([now-one]
    (buy now-one 5))
   ([now-one retry-times]
@@ -167,9 +172,14 @@
       (if (= (:trend trend?) "up")
         (if (= "bet" (utils/dice-once (:kline trend?) "up" now-one))
           (buy now-one))))
-    (if (= status "BUYING")
+    (when (= status "BUYING")
       (if (= (:trend trend?) "down")
         (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
+          (sell)))
+      (let [buy-price (:price (first @*actions*))
+            diff-price (- buy-price (:end-price now-one))]
+        (when (> diff-price 500)
+          (log/info "now price too low than buy price:" diff-price)
           (sell))))
     (reset-new-account-info!)))
 
