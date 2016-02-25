@@ -168,7 +168,8 @@
     (if (= status "BUYING")
       (if (= (:trend trend?) "down")
         (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
-          (sell))))))
+          (sell))))
+    (reset-new-account-info!)))
 
 (defn -main
   "I don't do a whole lot ... yet."
