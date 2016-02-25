@@ -132,7 +132,8 @@
                                                      :amount money
                                                      :id id
                                                      :datetime (utils/now)
-                                                     :net-asset net-asset}))
+                                                     :net-asset net-asset
+                                                     :price (int (/ net-asset available-btc-display))}))
                  (reset! *chips* {:money available-cny-display
                                   :btc available-btc-display
                                   :net-asset net-asset})
