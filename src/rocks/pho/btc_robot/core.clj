@@ -168,19 +168,20 @@
       (if (= "down" trend)
         (reset! *last-low-price* {:price end-price
                                   :datetime datetime})))
+    (when (= status "BUYING")
+      (let [buy-price (:price (first @*actions*))
+            diff-price (- buy-price (:end-price now-one))]
+        (log/info "now diff price:" diff-price)
+        (when (> diff-price 500)
+          (log/warn "now price too low than buy price:" diff-price)
+          (sell)))
+      (if (= (:trend trend?) "down")
+        (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
+          (sell))))
     (if (= status "HOLDING")
       (if (= (:trend trend?) "up")
         (if (= "bet" (utils/dice-once (:kline trend?) "up" now-one))
           (buy now-one))))
-    (when (= status "BUYING")
-      (if (= (:trend trend?) "down")
-        (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
-          (sell)))
-      (let [buy-price (:price (first @*actions*))
-            diff-price (- buy-price (:end-price now-one))]
-        (when (> diff-price 500)
-          (log/info "now price too low than buy price:" diff-price)
-          (sell))))
     (reset-new-account-info!)))
 
 (defn -main
