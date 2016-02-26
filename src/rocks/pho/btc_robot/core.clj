@@ -68,7 +68,7 @@
         available-cny-display (int (* 100 (Double/parseDouble (:available_cny_display account-info))))
         available-btc-display (Double/parseDouble (:available_btc_display account-info))
         net-asset (int (* 100 (Double/parseDouble (:net_asset account-info))))]
-    (log/info account-info)
+;;    (log/info account-info)
     (reset! *chips* {:money available-cny-display
                      :btc available-btc-display
                      :net-asset net-asset})))
@@ -170,10 +170,10 @@
                                   :datetime datetime})))
     (when (= status "BUYING")
       (let [buy-price (:price (first @*actions*))
-            diff-price (- buy-price (:end-price now-one))]
+            diff-price (- (:end-price now-one) buy-price)]
         (log/info "now diff price:" diff-price)
-        (when (> diff-price 500)
-          (log/warn "now price too low than buy price:" diff-price)
+        (when (< diff-price -500)
+          (log/error "now price too low than buy price:" diff-price)
           (sell)))
       (if (= (:trend trend?) "down")
         (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
@@ -208,4 +208,5 @@
       (log/info "actions:" @*actions*)
       (log/info "buy-status:" @*buy-status*)
       (log/info "dice result:" @*dice-results*)
+      (log/info "total:" (reduce + (map :result @*dice-results*)))
       (Thread/sleep 60000))))
