@@ -54,7 +54,9 @@
                                                      :result result
                                                      :buy-time (:buy-time tmp)
                                                      :sell-time datetime})
-                         (recur (pop w) {}))))))))))
+                         (recur (pop w) {})))))))))
+  (log/info "dice result:" @*dice-results*)
+  (log/info "total:" (reduce + (map :result @*dice-results*))))
 
 (defn update-kline-status
   "update kline status"
@@ -153,6 +155,7 @@
 (defn watching
   "watch data, dice trend and bet it"
   []
+  (log/info "I am watching!")
   (let [status @*buy-status*
         kline (update-kline-status)
         now-one (last kline)
@@ -207,6 +210,4 @@
       (log/info "chips:" @*chips*)
       (log/info "actions:" @*actions*)
       (log/info "buy-status:" @*buy-status*)
-      (log/info "dice result:" @*dice-results*)
-      (log/info "total:" (reduce + (map :result @*dice-results*)))
       (Thread/sleep 60000))))
