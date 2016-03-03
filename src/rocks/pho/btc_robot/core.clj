@@ -156,36 +156,39 @@
   "watch data, dice trend and bet it"
   []
   (log/info "I am watching!")
-  (let [status @*buy-status*
-        kline (update-kline-status)
-        now-one (last kline)
-        trend? (utils/trend-now? (butlast kline))]
-    (log/info trend?)
-    (let [trend (:trend trend?)
-          last-kline (last (:kline trend?))
-          end-price (:end-price last-kline)
-          datetime (:datetime last-kline)]
-      (if (= "up" trend)
-        (reset! *last-top-price* {:price end-price
-                                  :datetime datetime}))
-      (if (= "down" trend)
-        (reset! *last-low-price* {:price end-price
-                                  :datetime datetime})))
-    (when (= status "BUYING")
-      (let [buy-price (:price (first @*actions*))
-            diff-price (- (:end-price now-one) buy-price)]
-        (log/info "now diff price:" diff-price)
-        (when (< diff-price -500)
-          (log/error "now price too low than buy price:" diff-price)
-          (sell)))
-      (if (= (:trend trend?) "down")
-        (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
-          (sell))))
-    (if (= status "HOLDING")
-      (if (= (:trend trend?) "up")
-        (if (= "bet" (utils/dice-once (:kline trend?) "up" now-one))
-          (buy now-one))))
-    (reset-new-account-info!)))
+  (try
+    (let [status @*buy-status*
+          kline (update-kline-status)
+          now-one (last kline)
+          trend? (utils/trend-now? (butlast kline))]
+      (log/info trend?)
+      (let [trend (:trend trend?)
+            last-kline (last (:kline trend?))
+            end-price (:end-price last-kline)
+            datetime (:datetime last-kline)]
+        (if (= "up" trend)
+          (reset! *last-top-price* {:price end-price
+                                    :datetime datetime}))
+        (if (= "down" trend)
+          (reset! *last-low-price* {:price end-price
+                                    :datetime datetime})))
+      (when (= status "BUYING")
+        (let [buy-price (:price (first @*actions*))
+              diff-price (- (:end-price now-one) buy-price)]
+          (log/info "now diff price:" diff-price)
+          (when (< diff-price -500)
+            (log/error "now price too low than buy price:" diff-price)
+            (sell)))
+        (if (= (:trend trend?) "down")
+          (if (= "bet" (utils/dice-once (:kline trend?) "down" now-one))
+            (sell))))
+      (if (= status "HOLDING")
+        (if (= (:trend trend?) "up")
+          (if (= "bet" (utils/dice-once (:kline trend?) "up" now-one))
+            (buy now-one))))
+      (reset-new-account-info!))
+    (catch Exception e
+      (log/error e))))
 
 (defn -main
   "I don't do a whole lot ... yet."
