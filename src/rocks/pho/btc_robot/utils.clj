@@ -208,3 +208,17 @@
   "get last n kline by type"
   [type last-n]
   (reverse (map parse-kline-data (take last-n (reverse (get-kline type))))))
+
+(defn send-mail
+  [host from-email to-email user password message]
+  (let [re (send-message {:host host
+                          :ssl true
+                          :user user
+                          :pass password}
+                         {:from from-email
+                          :to to-email
+                          :subject "btc info"
+                          :body message})]
+    (if (= (:code re) 0)
+      (log/info re)
+      (log/error re))))

@@ -6,7 +6,8 @@
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [rocks.pho.btc-robot.utils :as utils]
-            [com.jd.bdp.magpie.util.timer :as timer]))
+            [com.jd.bdp.magpie.util.timer :as timer]
+            [postal.core :refer [send-message]]))
 
 ;; {:datetime :trend :end-price}
 (def ^:dynamic *kline-status* (atom {}))

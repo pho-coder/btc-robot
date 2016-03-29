@@ -1,4 +1,4 @@
-(defproject btc-robot "0.2.0-SNAPSHOT"
+(defproject btc-robot "0.3.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -11,7 +11,8 @@
                  [org.slf4j/slf4j-log4j12 "1.7.13"]
                  [org.clojure/tools.logging "0.3.1"]
                  [clj-time "0.11.0"]
-                 [com.jd.bdp.magpie/magpie-utils "0.1.3-SNAPSHOT"]]
+                 [com.jd.bdp.magpie/magpie-utils "0.1.3-SNAPSHOT"]
+                 [com.draines/postal "1.11.3"]]
   :main ^:skip-aot rocks.pho.btc-robot.core
   :target-path "target/%s"
   :jvm-opts ["-Duser.timezone=GMT+08"]
