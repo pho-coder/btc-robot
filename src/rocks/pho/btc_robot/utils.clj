@@ -4,7 +4,8 @@
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [clj-time.local :as local-time]
-            [clj-time.format :as format-time]))
+            [clj-time.format :as format-time]
+            [postal.core :refer [send-message]]))
 
 (defn now
   "get now yyyy-MM-dd HH:mm:ss"

@@ -12,7 +12,10 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [clj-time "0.11.0"]
                  [com.jd.bdp.magpie/magpie-utils "0.1.3-SNAPSHOT"]
-                 [com.draines/postal "1.11.3"]]
+                 [com.draines/postal "2.0.0"]
+                 [mount "0.1.10"]
+                 [org.clojure/tools.cli "0.3.5"]
+                 [cprop "0.1.8"]]
   :main ^:skip-aot rocks.pho.btc-robot.core
   :target-path "target/%s"
   :jvm-opts ["-Duser.timezone=GMT+08"]

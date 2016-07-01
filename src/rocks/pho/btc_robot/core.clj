@@ -7,7 +7,10 @@
             [clojure.tools.logging :as log]
             [rocks.pho.btc-robot.utils :as utils]
             [com.jd.bdp.magpie.util.timer :as timer]
-            [postal.core :refer [send-message]]))
+            [mount.core :as mount]
+            [clojure.tools.cli :refer [parse-opts]]
+
+            [rocks.pho.btc-robot.config :refer [env]]))
 
 ;; {:datetime :trend :end-price}
 (def ^:dynamic *kline-status* (atom {}))
@@ -191,10 +194,28 @@
     (catch Exception e
       (log/error e))))
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
+(defn stop-app
+  []
+  (doseq [component (:stopped (mount/stop))]
+    (log/info component "stopped"))
+  (shutdown-agents)
+  (log/info "bye"))
+
+(def cli-options
+  [["-p" "--port PORT" "Port number"
+    :parse-fn #(Integer/parseInt %)]])
+
+(defn start-app
+  [args]
   (log/info "Hello, World!")
+  (doseq [component (-> args
+                        (parse-opts cli-options)
+                        mount/start-with-args
+                        :started)]
+    (log/info component "started"))
+  (log/info env)
+  (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
+  (System/exit 0)
   (let [access-key (first args)
         secret-key (second args)
         kline-timer (timer/mk-timer)
@@ -215,3 +236,8 @@
       (log/info "actions:" @*actions*)
       (log/info "buy-status:" @*buy-status*)
       (Thread/sleep 60000))))
+
+(defn -main
+  "I don't do a whole lot ... yet."
+  [& args]
+  (start-app args))
