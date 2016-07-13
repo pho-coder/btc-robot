@@ -8,7 +8,7 @@
                  [clj-http "2.0.0"]
                  [digest "1.4.4"]
                  [org.apache.logging.log4j/log4j-core "2.5"]
-                 [org.slf4j/slf4j-log4j12 "1.7.13"]
+                 [org.slf4j/slf4j-log4j12 "1.7.16"]
                  [org.clojure/tools.logging "0.3.1"]
                  [clj-time "0.11.0"]
                  [com.jd.bdp.magpie/magpie-utils "0.1.3-SNAPSHOT"]
